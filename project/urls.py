@@ -15,6 +15,13 @@ from user.views import (
     AccountUpdate,
     AccountDelete,
 )
+
+from device.views import(
+    DeviceList,
+    DeviceAdd,
+    DeviceUpdate,
+    DeviceDelete,
+)
 urlpatterns = patterns('',
     # Examples:
     # url(r'^$', 'expex.views.home', name='home'),
@@ -29,6 +36,11 @@ urlpatterns = patterns('',
     url(r'^user/accounts/add/$', AccountAdd.as_view(), name='account_add'),
     url(r'^user/accounts/(?P<pk>\d+)/edit$', AccountUpdate.as_view(), name='account_edit'),
     url(r'^user/accounts/(?P<pk>\d+)/delete$', AccountDelete.as_view(), name='account_delete'),
+
+    url(r'^user/devices/$', DeviceList.as_view(), name='device_list'),
+    url(r'^user/devices/add/$', DeviceAdd.as_view(), name='device_add'),
+    url(r'^user/devices/(?P<pk>\d+)/edit$', DeviceUpdate.as_view(), name='device_edit'),
+    url(r'^user/devices/(?P<pk>\d+)/delete$', DeviceDelete.as_view(), name='device_delete'),
     
     url(r'^admin/', include(admin.site.urls)),
     (r'^media/(?P<path>.*)$', 'django.views.static.serve',

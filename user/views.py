@@ -102,7 +102,6 @@ class AccountList(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super(AccountList, self).get_context_data(**kwargs)
-        context['account'] = 'open'
         return context
 
 
@@ -126,7 +125,6 @@ class AccountAdd(LoginRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super(AccountAdd, self).get_context_data(**kwargs)
-        context['account'] = 'open'
         return context
 
 
@@ -150,7 +148,6 @@ class AccountUpdate(LoginRequiredMixin, UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super(AccountUpdate, self).get_context_data(**kwargs)
-        context['account'] = 'open'
         return context
 
 
@@ -161,7 +158,6 @@ class AccountDelete(LoginRequiredMixin, DeleteView):
 
     def get_context_data(self, **kwargs):
         context = super(AccountDelete, self).get_context_data(**kwargs)
-        context['account'] = 'open'
         return context
 
 

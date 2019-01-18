@@ -9,3 +9,7 @@ Pillow==2.5.3
 django-toolbelt
 django-mathfilters
 psycopg2-binary
+-e git+https://github.com/django-tastypie/django-tastypie@604e4ac97046773625c99ae43dd1c1df1b4d39af#egg=django_tastypie-master
+git+https://github.com/hansonkd/django-impersonate.git
+django-widget-tweaks # add css class in template
+django-activelink

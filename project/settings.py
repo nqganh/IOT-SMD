@@ -40,6 +40,10 @@ INSTALLED_APPS = (
     'user',
     'pagination',
     'device',
+    'tastypie',
+    'impersonate',
+    'activelink',
+    'widget_tweaks',
 )
 
 MIDDLEWARE_CLASSES = (
