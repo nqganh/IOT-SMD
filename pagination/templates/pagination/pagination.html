@@ -1,0 +1,44 @@
+{% if is_paginated %}
+{% load i18n %}
+    <ul class="pagination">
+    <li> <select  name = 'paginate_by' onChange="location.href=('?paginate_by='+this.value+'{{ hashtag }}');">
+        {% ifequal request.GET.paginate_by 20 %}
+        <option value=20 selected>20</option>
+        {%else%}
+        <option value=20>20</option>
+        {%endifequal%}
+        {% ifequal request.GET.paginate_by 50 %}
+        <option value=50 selected>50</option>
+        {%else%}
+        <option value=50>50</option>
+        {%endifequal%}
+        {% ifequal request.GET.paginate_by 100 %}
+        <option value=100 selected>100</option>
+        {%else%}
+        <option value=100>100</option>
+        {%endifequal%}
+    </select>
+    </li>
+    {% if page_obj.has_previous %}
+       <li> <a href="?page={{ page_obj.previous_page_number }}{{ getvars }}{{ hashtag }}" class="prev">&lsaquo;&lsaquo; {% trans "previous" %}</a></li>
+    {% else %}
+        <li><span class="disabled prev">&lsaquo;&lsaquo; {% trans "previous" %}</span></li>
+    {% endif %}
+    {% for page in pages %}
+        {% if page %}
+            {% ifequal page page_obj.number %}
+                <li><span class="current page"><font color='red'>{{ page }}</font></span></li>
+            {% else %}
+                <li><a href="?page={{ page }}{{ getvars }}{{ hashtag }}" class="page">{{ page }}</a></li>
+            {% endifequal %}
+        {% else %}
+            ...
+        {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}
+       <li> <a href="?page={{ page_obj.next_page_number }}{{ getvars }}{{ hashtag }}" class="next">{% trans "next" %} &rsaquo;&rsaquo;</a></li>
+    {% else %}
+        <li><span class="disabled next">{% trans "next" %} &rsaquo;&rsaquo;</span></li>
+    {% endif %}
+    </ul>
+{% endif %}

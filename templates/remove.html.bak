@@ -1,0 +1,33 @@
+{% extends "site_base.html" %}
+{% load i18n %}
+
+{% block body %}
+<!-- Main bar -->
+<div class="mainbar">
+	<!-- Page heading -->
+	<div class="page-head">
+	<!-- Page heading -->
+		<h2 class="pull-left">RBO 
+		  <!-- page meta -->
+		  <span class="page-meta">Save Your Bandwidth Maximum Guaranteed.</span>
+		</h2>
+		<!-- Breadcrumb -->
+		<div class="bread-crumb pull-right">
+		  <a href="index.html"><i class="fa fa-home"></i>Add New Item</a> 
+		</div>
+		<div class="clearfix"></div>
+	</div><!--/ Page heading ends -->
+	<!-- Matter -->
+	<div class="matter">
+		<div class="container">
+			<!-- Dashboard Graph starts -->
+			<div class="row">
+              <div class="col-md-12">
+                <form action="" method="post">{% csrf_token %}
+                <p>Are you sure you want to delete "{{ object }}"?</p>
+                <button class='btn btn-warning' type='submit'>Yes</button>
+                <button class='btn btn-success' onClick="history.go(-1); return false;">Cancel</button>
+                </form>
+              </div>
+			</div>
+{% endblock %}

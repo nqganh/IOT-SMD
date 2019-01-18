@@ -1,0 +1,21 @@
+.add-table > thead > tr > th, .add-table > tbody > tr > th, .add-table > tfoot > tr > th, .add-table > thead > tr > td, .add-table > tbody > tr > td, .add-table > tfoot > tr > td{
+  border: 0 !important;
+}
+
+.ace-nav .nav-user-photo{
+    border: 2px solid #fff;
+    border-radius: 100%;
+    height: 40px;
+    margin: -4px 8px 0 0;
+    width: 40px;
+}
+
+.add-box{
+    float: None !important;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.right-align{
+    text-align: right;
+}
