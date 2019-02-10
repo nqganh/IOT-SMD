@@ -86,7 +86,7 @@ class UserCreationForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ("email", "sure_name", "password1", "password2", "phone", "address", "company", "avatar")
+        fields = ("email", "sure_name", "password1", "password2")
 
     #def clean_username(self):
     #    # Since User.username is unique, this check is redundant,
@@ -352,13 +352,14 @@ class UserChangeForm(forms.ModelForm):
     the user, but replaces the password field with admin's
     password hash display field.
     """
+    email = forms.CharField(required=False)
     password1 = forms.CharField(label = 'Password', widget = forms.PasswordInput, required=False)
     password2 = forms.CharField(label = 'Password confirmation', widget = forms.PasswordInput, required=False)
 
 
     class Meta:
         model = User
-        fields = ('email', 'sure_name', 'password1', 'password2', 'phone', 'address', 'company', 'avatar')
+        fields = ('email', 'sure_name', 'password1', 'password2')
         #exclude = ['password', 'is_superuser', 'is_staff', 'last_login', 'is_active', 'groups', 'user_permissions']
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)

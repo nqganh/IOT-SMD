@@ -6,6 +6,14 @@ from django.contrib import admin
 admin.autodiscover()
 from django.contrib.auth.views import login, logout, password_reset, password_reset_done, password_reset_confirm, password_reset_complete
 
+from tastypie.api import Api
+from device.resources import UserResource, DeviceResource
+
+
+v1_api = Api(api_name='v1')
+v1_api.register(UserResource())
+v1_api.register(DeviceResource())
+
 from user.views import (
     HomePageView,
     LoginView,
@@ -28,6 +36,7 @@ urlpatterns = patterns('',
     # url(r'^blog/', include('blog.urls')),
     #url(r'^$', TemplateView.as_view(template_name="homepage.html")),
     url(r'^$', HomePageView.as_view(), name='home'),
+    (r'^api/', include(v1_api.urls)),
 
     url(r'^accounts/logout/$', logout, {'next_page': '/accounts/login' }, name='acct_logout'),
     url(r'^accounts/login/$', LoginView.as_view(), name='acct_login'),
@@ -39,8 +48,8 @@ urlpatterns = patterns('',
 
     url(r'^user/devices/$', DeviceList.as_view(), name='device_list'),
     url(r'^user/devices/add/$', DeviceAdd.as_view(), name='device_add'),
-    url(r'^user/devices/(?P<pk>\d+)/edit$', DeviceUpdate.as_view(), name='device_edit'),
-    url(r'^user/devices/(?P<pk>\d+)/delete$', DeviceDelete.as_view(), name='device_delete'),
+    url(r'^user/devices/(?P<uuid>[0-9a-f-]+)/edit$', DeviceUpdate.as_view(), name='device_edit'),
+    url(r'^user/devices/(?P<uuid>[0-9a-f-]+)/delete$', DeviceDelete.as_view(), name='device_delete'),
     
     url(r'^admin/', include(admin.site.urls)),
     (r'^media/(?P<path>.*)$', 'django.views.static.serve',

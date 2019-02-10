@@ -37,14 +37,7 @@
                     </th>
                     <th>Email</th>
                     <th>Sure Name</th>
-                    <th class="hidden-480">Phone</th>
-
-                    <th>
-                        <i class="ace-icon fa fa-clock-o bigger-110 hidden-480"></i>
-                        Company
-                    </th>
-                    <th class="hidden-480">Address</th>
-
+                    <th>Company</th>
                     <th></th>
                 </tr>
             </thead>
@@ -60,9 +53,7 @@
                     </td>
                     <td>{{row.email}}</td>
                     <td>{{row.sure_name}}</td>
-                    <td class="hidden-480">{{row.phone}}</td>
                     <td>{{row.company}}</td>
-                    <td class="hidden-480">{{row.address}}</td>
                     <td>
                         <div class="hidden-sm hidden-xs action-buttons">
                             <a class="green" href="{% url 'account_edit' row.id%}">
@@ -119,7 +110,7 @@
             bAutoWidth: false,
             "aoColumns": [
               { "bSortable": false },
-              null, null,null, null, null,
+              null, null, null, 
               { "bSortable": false }
             ],
             "aaSorting": [],

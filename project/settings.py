@@ -112,7 +112,8 @@ DATABASES = {
     'default': dj_database_url.config(),
 }
 # Honor the 'X-Forwarded-Proto' header for request.is_secure()
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+#SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+AUTHENTICATION_BACKENDS = ['user.backends.EmailOrUsernameModelBackend']
 
 # Allow all host headers
 ALLOWED_HOSTS = ['*']
@@ -124,6 +125,9 @@ STATIC_ROOT = 'staticfiles'
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'static'),
 )
+
+CONTEXT = '178.128.215.198'
+DOMAIN_UUID = '09f10c29-9f49-4209-9050-52bd09d1886a'
 try:
     from local_settings import *
 except ImportError:

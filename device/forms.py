@@ -1,11 +1,14 @@
 from django import forms
-from .models import Device
+from user.models import User
+from .models import Extension
 
-class DeviceForm(forms.ModelForm):
+class ExtensionForm(forms.ModelForm):
+    client = forms.ModelChoiceField(required=False, queryset=User.objects.exclude(role=1))
     class Meta:
-        model = Device
-        fields = ('user', 'sip_username', 'sip_password', 'imei')
+        model = Extension
+        fields = ('client', 'extension_uuid')
+
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
         self.role = kwargs.pop('role', None)
-        super(DeviceForm, self).__init__(*args, **kwargs)
+        super(ExtensionForm, self).__init__(*args, **kwargs)

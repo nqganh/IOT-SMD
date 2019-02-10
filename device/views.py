@@ -1,3 +1,4 @@
+import random, string
 from django.shortcuts import render
 from django.views.generic.list import ListView
 from django.views.generic.edit import DeleteView
@@ -10,13 +11,14 @@ from django.views.decorators.csrf import csrf_protect
 from django.contrib.sites.models import get_current_site
 from user.views import LoginRequiredMixin
 from django.conf import settings
-from user.models import CUSTOMER, ADMIN
-from .models import Device
-from .forms import DeviceForm
+from user.models import CUSTOMER, ADMIN, User
+from .models import Extension
+from .forms import  ExtensionForm
 
 # Create your views here.
 class DeviceList(LoginRequiredMixin, ListView):
-    model = Device
+    model = Extension
+    template_name = 'device/device_list.html'
     paginate_by = settings.PAGINATE_BY
     allowed_filters = {
         'user': 'sure_name',
@@ -38,13 +40,15 @@ class DeviceList(LoginRequiredMixin, ListView):
 
 
 class DeviceAdd(LoginRequiredMixin, CreateView):
-    model = Device
-    form_class = DeviceForm
+    model = Extension
+    form_class = ExtensionForm
     success_url = reverse_lazy('device_list')
     template_name = 'add.html'
 
     def form_valid(self, form):
-        #form.instance.user = self.request.user
+        form.instance.accountcode = form.cleaned_data['client'].id
+        form.instance.extension = random.randint(100000,999999)
+        form.instance.password = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(20))
         return super(DeviceAdd, self).form_valid(form)
 
     def get_form_kwargs(self):
@@ -58,12 +62,19 @@ class DeviceAdd(LoginRequiredMixin, CreateView):
 
 
 class DeviceUpdate(LoginRequiredMixin, UpdateView):
-    model = Device
+    model = Extension
     template_name = 'add.html'
-    form_class = DeviceForm
+    form_class = ExtensionForm
     success_url = reverse_lazy('device_list')
 
+    def get_initial(self):
+        if self.object.accountcode:
+            client = User.objects.get(id=self.object.accountcode)
+            return {'client': client}
+        return {}
+
     def form_valid(self, form):
+        self.object.accountcode = form.cleaned_data['client'].id
         self.object.save()
         return HttpResponseRedirect(self.success_url)
 
@@ -76,11 +87,17 @@ class DeviceUpdate(LoginRequiredMixin, UpdateView):
         context = super(DeviceUpdate, self).get_context_data(**kwargs)
         return context
 
+    def get_object(self, queryset=None):
+        return Extension.objects.get(extension_uuid=self.kwargs['uuid'])
+
 
 class DeviceDelete(LoginRequiredMixin, DeleteView):
-    model = Device
+    model = Extension
     success_url = reverse_lazy('device_list')
     template_name = 'remove.html'
+
+    def get_object(self, queryset=None):
+        return Extension.objects.get(extension_uuid=self.kwargs['uuid'])
 
     def get_context_data(self, **kwargs):
         context = super(DeviceDelete, self).get_context_data(**kwargs)

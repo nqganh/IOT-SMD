@@ -1,6 +1,6 @@
 {% extends "site_base.html" %}
 {% load i18n %}
-{% load pagination_tags%}
+{% load pagination_tags user_extra %}
 {% load staticfiles %}
 {% block page-content%}
 <div class="page-content">
@@ -36,13 +36,10 @@
                         </label>
                     </th>
                     <th>Client</th>
+                    <th>Sip UUID</th>
                     <th>Sip Username</th>
-                    <th class="hidden-480">Sip Password</th>
-
-                    <th>
-                        <i class="ace-icon fa fa-clock-o bigger-110 hidden-480"></i>
-                        IMEI
-                    </th>
+                    <th>Sip Password</th>
+                    <th>Active</th>
                     <th></th>
                 </tr>
             </thead>
@@ -56,17 +53,19 @@
                             <span class="lbl"></span>
                         </label>
                     </td>
-                    <td>{{row.user.email}}</td>
-                    <td>{{row.sip_username}}</td>
-                    <td class="hidden-480">{{row.sip_password}}</td>
-                    <td>{{row.imei}}</td>
+                    <td>{{row|get_client}}</td>
+                    <td>{{row.extension_uuid}}</td>
+                    <td>{{row.extension}}</td>
+                    <td>{{row.password}}</td>
+                    <td>{{row.extension_uuid}}</td>
+                    <td>{{row.is_active}}</td>
                     <td>
                         <div class="hidden-sm hidden-xs action-buttons">
-                            <a class="green" href="{% url 'device_edit' row.id%}">
+                            <a class="green" href="{% url 'device_edit' row.extension_uuid %}">
                                 <i class="ace-icon fa fa-pencil bigger-130"></i>
                             </a>
 
-                            <a class="red" href="{% url 'device_delete' row.id %}">
+                            <a class="red" href="{% url 'device_delete' row.extension_uuid %}">
                                 <i class="ace-icon fa fa-trash-o bigger-130"></i>
                             </a>
                         </div>
@@ -94,7 +93,7 @@
             bAutoWidth: false,
             "aoColumns": [
               { "bSortable": false },
-              null, null,null, null,
+              null, null,null, null, null, null, 
               { "bSortable": false }
             ],
             "aaSorting": [],

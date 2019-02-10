@@ -1,3 +1,4 @@
+import uuid
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin
 from django.db import models
 from fields import ContentTypeRestrictedFileField
@@ -47,6 +48,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     phone = models.CharField(max_length=200, blank=True)
     company = models.CharField(max_length=200, blank=True)
 
+    ring_group_ext = models.CharField(max_length=10, blank=True)
+    ring_group_strategy = models.CharField(max_length=15, blank=True)
+
+
+    parent = models.ForeignKey('self',  null=True, blank=True)
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
