@@ -198,6 +198,8 @@ class DeviceResource(ModelResource):
             if data.get('is_bell') == 'true':
                 ext.description = 'is_bell'
             ext.save()
+            from device.models import sync_ring_group_user
+            sync_ring_group_user(obj.accountcode)
             data_res = {"extension": kwargs['extension'], "password": kwargs['password'], "resource_uri": "/api/v1/device/%s/" % data['uuid']}
             response = self.error_response(bundle.request, data_res, response_class=HttpOK)
             raise ImmediateHttpResponse(response=response)
@@ -215,13 +217,12 @@ class DeviceResource(ModelResource):
                 obj.dial_string = 'error/user_busy'
             else:
                 obj.dial_string = ''
-            obj.save()
         if data.get('is_bell'):
             if data.get('is_bell') == 'true':
                 obj.description = 'is_bell'
             else:
                 obj.description = ''
-            obj.save()
+        obj.save()
         from device.models import sync_ring_group_user
         sync_ring_group_user(obj.accountcode)
         return ret

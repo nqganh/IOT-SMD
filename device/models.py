@@ -82,7 +82,7 @@ def save_extension_fusionpbx_trigger(sender, instance, **kwargs):
     except:
         pass
 
-    sync_ring_group_user(instance.accountcode)
+    #sync_ring_group_user(instance.accountcode)
     return
 
 DIALPLAN_XML = """<extension name="ring group" continue="" uuid="%s">           
