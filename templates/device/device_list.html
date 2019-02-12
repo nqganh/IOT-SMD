@@ -39,7 +39,8 @@
                     <th>Sip UUID</th>
                     <th>Sip Username</th>
                     <th>Sip Password</th>
-                    <th>Active</th>
+                    <th>DND</th>
+                    <th>IS_BELL</th>
                     <th></th>
                 </tr>
             </thead>
@@ -57,8 +58,8 @@
                     <td>{{row.extension_uuid}}</td>
                     <td>{{row.extension}}</td>
                     <td>{{row.password}}</td>
-                    <td>{{row.extension_uuid}}</td>
-                    <td>{{row.is_active}}</td>
+                    <td>{{row.do_not_disturb}}</td>
+                    <td>{{row.description}}</td>
                     <td>
                         <div class="hidden-sm hidden-xs action-buttons">
                             <a class="green" href="{% url 'device_edit' row.extension_uuid %}">
