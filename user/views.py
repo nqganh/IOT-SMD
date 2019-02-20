@@ -35,13 +35,23 @@ class LoginRequiredMixin(object):
             return filters
 
     def get_queryset(self):
-        return super(LoginRequiredMixin, self).get_queryset()\
+        return super(LoginRequiredMixin, self).get_queryset()
               .filter(**self.get_queryset_filters())
 
 
-class HomePageView(LoginRequiredMixin, TemplateView):
+class HomePageView(LoginRequiredMixin, ListView):
+    model = User
+    queryset = User.objects.all()
     template_name = "homepage.html"
 
+    def get_template_names(self):
+        return [template_name]
+
+
+    def get_context_data(self, **kwargs):
+        context = super(HomePageView, self).get_context_data(*args,**kwargs)
+        print(context)
+        return context
 
 class LoginView(FormView):
     """

@@ -65,6 +65,8 @@ class Extension(models.Model):
     absolute_codec_string          = models.CharField(max_length=128, blank=True)    
     force_ping                     = models.CharField(max_length=8, blank=True)     
 
+    def __str__(self):
+        return self.extension
     class Meta:
        managed = False
        db_table = 'v_extensions'
