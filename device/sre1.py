@@ -22,7 +22,6 @@ from tastypie.exceptions import ImmediateHttpResponse
 from tastypie import fields
 from user.models import User, RingGroup
 from django.forms.models import model_to_dict
-from django.core.validators import validate_email, ValidationError
 
 from  device.models import Extension, RingGroupDestination
 
@@ -118,12 +117,11 @@ class UserResource(ModelResource):
 #        queryset = User.objects.exclude(role=1)
         queryset = User.objects.all()
         resource_name = 'user'
-        allowed_methods = ['get','put', 'patch']
+        allowed_methods = ['get']
         authentication = MultiAuthentication(IPBasicAuthentication(), ApiKeyAuthentication())
         authorization = Authorization()
         serializer = urlencodeSerializer()
-        always_return_data = True
-        fields = ['email', 'sure_name', 'phone', 'full_name']
+        fields = ['email', 'sure_name', 'company']
         filtering = {
             'sure_name': ALL,
             'email': ALL,
@@ -141,75 +139,9 @@ class UserResource(ModelResource):
                 response = self.error_response(request, data_res, response_class=HttpBadRequest)
                 raise ImmediateHttpResponse(response=response)
 
-    def obj_update(self, bundle, **kwargs):
-        data = bundle.data
-        unchange_list = ['sure_name', 'full_name', 'email', 'phone', 'password']
-        er = 0
-        data_er = {}
-        for value in unchange_list:
-            if value in data:
-                del data[value]
-        obj = bundle.obj
-        ret =  super(UserResource, self).obj_update(bundle, **kwargs)
-        data_res = {'email': obj.email, 'phone': obj.phone, 'full_name': obj.full_name, 'sure_name': obj.sure_name, 'resource_uri': '/api/v1/user/%s/' % obj.id}
-        if data.get('update_full_name'):
-            if data.get('update_full_name') != '':
-                data['update_full_name'] = data['update_full_name'].rstrip(' ')
-                obj.full_name = data['update_full_name']
-                data_res.update({'update_full_name': obj.full_name})
-                del data_res['full_name']
-        if data.get('update_phone'):
-            if data.get('update_phone') != '':
-                data['update_phone'] = data['update_phone'].rstrip(' ')
-                obj.phone = data['update_phone']
-                data_res.update({'update_phone': obj.phone})
-                del data_res['phone']
-        if data.get('update_email'):
-            if data['update_email'] !='':
-                data['update_email'] = data['update_email'].rstrip(' ')
-                new_email = data['update_email']
-                try:
-                    validate_email(new_email)
-                    old_email = obj.email
-                    if User.objects.exclude(email=old_email).filter(email=new_email).count() > 0:
-                        er = 1
-                        data_er.update({'error-update-email': 'Please insert a another email address. Email is existed'})
-                    else:
-                        obj.email = new_email
-                        data_res.update({'update_email': obj.email})
-                        del data_res['email']
-                except ValidationError:
-                        er = 1
-                        data_er.update({'error-update-email': 'Please insert a valid email address.'})
-
-        if data.get('update_pw'):
-            if data['update_pw'] !='':
-                if 'update_pw_confirm' not in data:
-                    er = 1
-                    data_er.update({'error-update-password': 'Please insert pw_confirm field.'})
-                else:
-                    if data['update_pw_confirm'] != '':
-                        if data['update_pw'] != data['update_pw_confirm']:
-                            er = 1
-                            data_er.update({'error-update-password': 'Your password and confirmation password do not match.'})
-                        else:
-                            obj.set_password(data['update_pw'])
-                            data_res.update({'update_password_status': 'success'})
-        if er == 1:
-            response = self.error_response(bundle.request, data_er, response_class=HttpBadRequest)
-            raise ImmediateHttpResponse(response=response)
-        
-        obj.save()
-        response = self.error_response(bundle.request, data_res, response_class=HttpOK)
-        raise ImmediateHttpResponse(response=response)
-#        return ret
-    
 class RingGroupResource(ModelResource):
-    list_sip = fields.CharField(blank=True, null=True)
-    department_uuid = fields.CharField(attribute='ring_group_uuid')
-    department_name = fields.CharField(attribute='ring_group_name')
-    department_extension = fields.CharField(attribute='ring_group_extension')
-#    user = fields.ToManyField(UserResource, 'user')
+    
+   # user = fields.ToManyField(UserResource, 'user')
     
     class Meta:
         queryset = RingGroup.objects.all()
@@ -219,23 +151,10 @@ class RingGroupResource(ModelResource):
         authorization = Authorization()
         serializer = urlencodeSerializer()
         always_return_data = True
-        fields = []
-       # fields = ['ring_group_name', 'ring_group_uuid', 'ring_group_extension']
+        fields = ['ring_group_name','ring_group_uuid', 'ring_group_extension']
         filtering = {
             'uuid': ALL,
         }
-    def dehydrate_list_sip(self, bundle):
-        obj = bundle.obj
-        le = ""
-        if RingGroupDestination.objects.filter(ring_group_uuid=obj.ring_group_uuid).count() == 0:
-            return ''
-        else:
-            listext = RingGroupDestination.objects.filter(ring_group_uuid=obj.ring_group_uuid)
-            for ext in listext:
-                abc = Extension.objects.filter(extension=ext.destination_number)[0]
-                le = str(abc.extension_uuid) + ', ' + le
-            le = le.rstrip(', ')
-            return le
 
     def get_object_list(self, request, **kwargs):
         ky = request.user.id
@@ -248,7 +167,7 @@ class RingGroupResource(ModelResource):
                 else:
                    # kwargs["pk"] = 0
                     uuid = request.GET['uuid']
-                    data_res = {'error': "department's uuid doesn't exist"}
+                    data_res = {'error': "department's uuid is not exist"}
                     response = self.error_response(request, data_res, response_class=HttpBadRequest)
                     raise ImmediateHttpResponse(response=response)
             else:
@@ -270,6 +189,7 @@ class RingGroupResource(ModelResource):
         req = ['uuid']
         ren = ['name']
         data = bundle.data
+        print data
         for value in req:
             if value not in data or data[value] == '' or is_valid_uuid(data[value]) == False:
                 for vl2 in ren:
@@ -293,7 +213,7 @@ class RingGroupResource(ModelResource):
                         response = self.error_response(bundle.request, data_res, response_class=HttpBadRequest)
                         raise ImmediateHttpResponse(response=response)
         if RingGroup.objects.filter(ring_group_uuid=data['uuid']).count() > 0:
-                data_res = {'error': "uuid exists, you cant create new one"}
+                data_res = {'error': "uuid is exist, you cant create new one"}
                 response = self.error_response(bundle.request, data_res, response_class=HttpBadRequest)
                 raise ImmediateHttpResponse(response=response)
         else:
@@ -302,13 +222,8 @@ class RingGroupResource(ModelResource):
                     data[value] = True
                 elif data[value] in ['false', 'False']:
                     data[value] = False
-            i = 0
-            while i < 10000000:
-                i += 1
-                kwargs['ring_group_extension'] = random.randint(100000,999999)
-                if RingGroup.objects.filter(ring_group_extension=kwargs['ring_group_extension']).count() == 0:
-                    break
             kwargs['domain_uuid'] = '09f10c29-9f49-4209-9050-52bd09d1886a'
+            kwargs['ring_group_extension'] = random.randint(100000,999999)            
             kwargs['dialplan_uuid'] = uuid.uuid4()
             kwargs['ring_group_name'] = data['name']
             rg = RingGroup()
@@ -322,121 +237,9 @@ class RingGroupResource(ModelResource):
 #             ext.accountcode = bundle.request.user
             from device.models import sync_dialplan_rg
             sync_dialplan_rg(rg.ring_group_uuid)
-            data_res = {"department_name": kwargs['ring_group_name'], "department_extension": kwargs['ring_group_extension'], "resource_uri": "/api/v1/department/%s/" % data['uuid']}
+            data_res = {"ring_group_name": kwargs['ring_group_name'], "ring_group_extension": kwargs['ring_group_extension'], "resource_uri": "/api/v1/department/%s/" % data['uuid']}
             response = self.error_response(bundle.request, data_res, response_class=HttpOK)
             raise ImmediateHttpResponse(response=response)
-    def obj_update(self, bundle, **kwargs):
-        ky = bundle.request.user.id
-        data = bundle.data
-        unchange_list = ['department_extension', 'department_uuid']
-        for value in unchange_list:
-            if value in data:
-                del data[value]
-        ret =  super(RingGroupResource, self).obj_update(bundle, **kwargs)
-        obj = bundle.obj
-        if data.get('department_name'):
-            if data['department_name'] != '':
-                obj.ring_group_name = data['department_name']
-                obj.save()
-        if data.get('remove_sip'):
-            le = ""
-            data['remove_sip'] = data['remove_sip'].replace(' ','')
-            data['remove_sip'] = data['remove_sip'].replace(';',',')
-            if data['remove_sip'] == 'all':
-                if RingGroupDestination.objects.filter(ring_group_uuid=obj.ring_group_uuid).count() >0:
-                    RingGroupDestination.objects.filter(ring_group_uuid=obj.ring_group_uuid).delete()
-                    from device.models import sync_dialplan_rg
-                    sync_dialplan_rg(obj.ring_group_uuid)
-                    return ret
-            if data['remove_sip'] != '':
-                listextrmv = data['remove_sip'].split(',')
-                if Extension.objects.filter(accountcode=ky).count() == 0:
-                    data_res = {'error': "have no sip account, let's create new one"}
-                    response = self.error_response(bundle.request, data_res, response_class=HttpBadRequest)
-                    raise ImmediateHttpResponse(response=response)
-                else:
-                    listextuser = Extension.objects.filter(accountcode=ky)
-                if RingGroupDestination.objects.filter(ring_group_uuid=obj.ring_group_uuid).count() == 0:
-                    data_res = {'error': "have no sip account in the department's list, let's add new one"}
-                    response = self.error_response(bundle.request, data_res, response_class=HttpBadRequest)
-                    raise ImmediateHttpResponse(response=response)
-                else:
-                    listrguser = RingGroupDestination.objects.filter(ring_group_uuid=obj.ring_group_uuid)
-                    for rguuid in listrguser:
-                        abc = Extension.objects.filter(extension=rguuid.destination_number)[0]
-                        le = str(abc.extension_uuid) + ', ' + le
-                    listextold = le.rstrip(', ')
-                    listextold = listextold.replace(' ','')
-                    listextold = listextold.split(',')
-                for extel in listextrmv:
-                    er = 0
-                    if is_valid_uuid(extel) == False:
-                        er = 1
-                        data_res = {'error_sip': "at least one invalid sip uuid exists. Please check sip uuid list"}
-                        response = self.error_response(bundle.request, data_res, response_class=HttpBadRequest)
-                        raise ImmediateHttpResponse(response=response)
-                    if listextuser.filter(extension_uuid=extel).count() == 0:
-                        er = 1
-                        data_res = {'error_sip': "at least one sip uuid doesn't exists in this user's sip list. Please check sip uuid list"}
-                        response = self.error_response(bundle.request, data_res, response_class=HttpBadRequest)
-                        raise ImmediateHttpResponse(response=response)
-                    if extel not in listextold:
-                        er = 1
-                        data_res = {'error_sip': "at least one sip uuid doesn't exists in this department's list. Please check sip uuid list"}
-                        response = self.error_response(bundle.request, data_res, response_class=HttpBadRequest)
-                        raise ImmediateHttpResponse(response=response) 
-                if er == 0:
-                    for extel in listextrmv:
-                        extp = Extension.objects.filter(extension_uuid=extel)[0]
-                        RingGroupDestination.objects.filter(ring_group_uuid=obj.ring_group_uuid).filter(destination_number=extp.extension).delete()
-        if data.get('add_sip'):
-            le = ""
-            data['add_sip'] = data['add_sip'].replace(' ','')
-            data['add_sip'] = data['add_sip'].replace(';',',')
-            if data['add_sip'] != '':
-                listextadd = data['add_sip'].split(',')
-                if Extension.objects.filter(accountcode=ky).count() == 0:
-                    data_res = {'error': "have no sip account, let's create new one"}
-                    response = self.error_response(bundle.request, data_res, response_class=HttpBadRequest)
-                    raise ImmediateHttpResponse(response=response)
-                else:
-                    listextuser = Extension.objects.filter(accountcode=ky)
-                listrguser = RingGroupDestination.objects.filter(ring_group_uuid=obj.ring_group_uuid)
-                for rguuid in listrguser:
-                    abc = Extension.objects.filter(extension=rguuid.destination_number)[0]
-                    le = str(abc.extension_uuid) + ', ' + le
-                listextold = le.rstrip(', ')
-                listextold = listextold.split(',')                
-                er = 0
-                for extel in listextadd:
-                    if is_valid_uuid(extel) == False:
-                        er = 1
-                        data_res = {'error_sip': "at least one invalid sip uuid exists. Please check sip uuid list"}
-                        response = self.error_response(bundle.request, data_res, response_class=HttpBadRequest)
-                        raise ImmediateHttpResponse(response=response)
-                    if listextuser.filter(extension_uuid=extel).count() == 0:
-                        er = 1
-                        data_res = {'error_sip': "at least one sip uuid doesn't exists in this user's sip list. Please check sip uuid list"}
-                        response = self.error_response(bundle.request, data_res, response_class=HttpBadRequest)
-                        raise ImmediateHttpResponse(response=response)
-                    else:
-                        ck_bell = listextuser.filter(extension_uuid=extel)[0]
-                        if ck_bell.description == 'is_bell':
-                            er = 1
-                            data_res = {'error_sip': "at least one sip uuid is bell. Please check sip uuid list"}
-                            response = self.error_response(bundle.request, data_res, response_class=HttpBadRequest)
-                            raise ImmediateHttpResponse(response=response)
-                if er == 0:
-                    for extel in listextadd:
-                        if extel not in listextold:
-                            rdg = RingGroupDestination()
-                            rdg.ring_group_destination_uuid = uuid.uuid4()
-                            rdg.ring_group_uuid = RingGroup.objects.get(ring_group_uuid=obj.ring_group_uuid)
-                            rdg.destination_number = Extension.objects.get(extension_uuid=extel)
-                            rdg.save()
-        from device.models import sync_dialplan_rg
-        sync_dialplan_rg(obj.ring_group_uuid)
-        return ret
 
 class DeviceResource(ModelResource):
     is_bell = fields.CharField(blank=True, null=True)
@@ -471,11 +274,11 @@ class DeviceResource(ModelResource):
 #                 kwargs["pk"] = Extension.objects.filter(extension_uuid=request.GET['uuid'])
                     return super(DeviceResource, self).get_object_list(request, **kwargs).filter(extension_uuid=request.GET['uuid'])
                 else:
-                    data_res = {'error': "sip account's uuid doesn't exist"}
+                    data_res = {'error': "sip account's uuid is not exist"}
                     response = self.error_response(request, data_res, response_class=HttpBadRequest)
                     raise ImmediateHttpResponse(response=response)
             else:
-                data_res = {'error': "sip account's uuid doesn't valid"}
+                data_res = {'error': "sip account's uuid is not valid"}
                 response = self.error_response(request, data_res, response_class=HttpBadRequest)
                 raise ImmediateHttpResponse(response=response)
         else:
@@ -499,7 +302,7 @@ class DeviceResource(ModelResource):
                 response = self.error_response(bundle.request, data_res, response_class=HttpBadRequest)
                 raise ImmediateHttpResponse(response=response)
         if Extension.objects.filter(extension_uuid=data['uuid']).count() > 0:
-            data_res = {'error': "uuid doesn't exist, you cant create new one, please get sip account"}
+            data_res = {'error': "uuid is exist, you cant create new one, please get sip account"}
             response = self.error_response(bundle.request, data_res, response_class=HttpBadRequest)
             raise ImmediateHttpResponse(response=response)
         else:
@@ -508,12 +311,7 @@ class DeviceResource(ModelResource):
                     data[value] = True
                 elif data[value] in ['false', 'False']:
                     data[value] = False
-            i = 0
-            while i < 10000000:
-                i += 1
-                kwargs['extension'] = random.randint(1000000,9999999)
-                if Extension.objects.filter(extension=kwargs['extension']).count() == 0:
-                    break
+            kwargs['extension'] = random.randint(100000,999999)
             kwargs['password'] = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(20))
             ext = Extension()
             ext.extension = kwargs['extension']
@@ -532,7 +330,7 @@ class DeviceResource(ModelResource):
 
     def obj_update(self, bundle, **kwargs):
         data = bundle.data
-        unchange_list = ['uuid', 'extension', 'password']
+        unchange_list = ['uuid', 'username', 'password']
         for value in unchange_list:
             if value in data:
                 del data[value]
@@ -543,21 +341,154 @@ class DeviceResource(ModelResource):
                 obj.dial_string = 'error/user_busy'
             else:
                 obj.dial_string = ''
-                obj.do_not_disturb = ''
         if data.get('is_bell'):
             if data.get('is_bell') == 'true':
-                if RingGroupDestination.objects.filter(destination_number=obj.extension).count() > 0:
-                    data_res = {'error': "uuid exists in department's list, please check uuid again"}
-                    response = self.error_response(bundle.request, data_res, response_class=HttpBadRequest)
-                    raise ImmediateHttpResponse(response=response)
-                else:
-                    obj.description = 'is_bell'
+                obj.description = 'is_bell'
             else:
                 obj.description = ''
         obj.save()
         from device.models import sync_extension_user
         sync_extension_user(obj.extension)
         return ret
+
+class RingGroupDestinationResource(ModelResource):
+    ring_group_uuid = fields.ForeignKey(RingGroupResource, 'ring_group_uuid', full=True)
+    destination_number = fields.ForeignKey(DeviceResource, 'destination_number', full=True)
+    class Meta:
+        queryset = RingGroupDestination.objects.all()
+        allowed_methods = ['get', 'post', 'delete']
+        resource_name = 'rgdes'
+        authentication = MultiAuthentication(IPBasicAuthentication(), ApiKeyAuthentication())
+        authorization = Authorization()
+        serializer = urlencodeSerializer()
+        always_return_data = True
+        fields = ['ring_group_destination_uuid', 'destination_number', 'ring_group_uuid']
+        filtering = {
+            'uuid': ALL,
+            'destination_number': ALL,
+        }
+
+    def get_object_list(self, request, **kwargs):
+        ky = request.user.id
+        kc = request.user.ring_group.all()
+        if RingGroupDestination.objects.filter(ring_group_uuid__in=kc).count() > 0:
+            return super(RingGroupDestinationResource, self).get_object_list(request, **kwargs).filter(ring_group_uuid__in=kc)
+        else:
+            data_res = {'error': "RG destination's list is empty"}
+            response = self.error_response(request, data_res, response_class=HttpBadRequest)
+            raise ImmediateHttpResponse(response=response)
+
+    def obj_create(self, bundle, **kwargs):
+        rg = ['depuuid']
+        ext = ['extuuid']
+        data = bundle.data
+        ky = bundle.request.user.id
+        listrg = bundle.request.user.ring_group.all()
+        listext = Extension.objects.filter(accountcode=ky)
+        er1 = 0
+        er2 = 0
+        if len(bundle.request.user.ring_group.all()) == 0:
+            if Extension.objects.filter(accountcode=ky).count() == 0:
+                data_res = {'error_dep': "have no department, let's create new one", 'error_sip': "have no sip account, let's create new one"}
+                response = self.error_response(bundle.request, data_res, response_class=HttpBadRequest)
+                raise ImmediateHttpResponse(response=response)
+            else:
+                data_res = {'error_dep': "have no department, let's create new one"}
+                response = self.error_response(bundle.request, data_res, response_class=HttpBadRequest)
+                raise ImmediateHttpResponse(response=response) 
+        for vlex in ext:
+            if vlex not in data or data[vlex] == '':
+                er2 = 2
+            else:
+                if type(data[vlex]) is not list:
+                    data[vlex] = data[vlex].replace(' ', '')
+                    lextadd = data[vlex].split(';')
+                    for exte in lextadd:
+                        if is_valid_uuid(exte) == False:
+                            er2 = 3
+                        else:
+                            if listext.filter(extension_uuid=exte).count() == 0:
+                                er2 = 4
+                            else:
+                                ledt = listext.filter(extension_uuid=exte)
+                                for a in ledt:
+                                    if a.description == 'is_bell':
+                                        er2 = 5
+        for vlrg in rg:
+            if vlrg not in data or data[vlrg] == '' or is_valid_uuid(data[vlrg]) == False:
+                er1 = 1
+            else:
+                if listrg.filter(ring_group_uuid=data[vlrg]).count() == 0:
+                    er1 = 2
+        if er1 == 1:
+            if  er2 == 2 or er2 == 3:
+                data_res = {'error_dep': "department uuid is not valid", 'error_sip': "sip uuid is not valid"}
+                response = self.error_response(bundle.request, data_res, response_class=HttpBadRequest)
+                raise ImmediateHttpResponse(response=response)
+            if er2 == 4:
+                data_res = {'error_dep': "department uuid is not valid", 'error_sip': "sip uuid is not exist in list"}
+                response = self.error_response(bundle.request, data_res, response_class=HttpBadRequest)
+                raise ImmediateHttpResponse(response=response)
+            if er2 == 5:
+                data_res = {'error_dep': "department uuid is not valid", 'error_sip': "sip uuid is bell. Let's set another sip account"}
+                response = self.error_response(bundle.request, data_res, response_class=HttpBadRequest)
+                raise ImmediateHttpResponse(response=response)
+            else:
+                data_res = {'error_dep': "department uuid is not valid"}
+                response = self.error_response(bundle.request, data_res, response_class=HttpBadRequest)
+                raise ImmediateHttpResponse(response=response) 
+        if er1 == 2:
+            if er2 == 2 or er2 == 3:
+                data_res = {'error_dep': "department uuid is not exits in list", 'error_sip': "sip uuid is not valid"}
+                response = self.error_response(bundle.request, data_res, response_class=HttpBadRequest)
+                raise ImmediateHttpResponse(response=response)
+            if er2 == 4:
+                data_res = {'error_dep': "department uuid is not exits in list", 'error_sip': "sip uuid is not exist in list"}
+                response = self.error_response(bundle.request, data_res, response_class=HttpBadRequest)
+                raise ImmediateHttpResponse(response=response)
+            if er2 == 5:
+                data_res = {'error_dep': "department uuid is not exits in list", 'error_sip': "sip uuid is bell. Let's set another sip account"}
+                response = self.error_response(bundle.request, data_res, response_class=HttpBadRequest)
+                raise ImmediateHttpResponse(response=response)
+            else:
+                data_res = {'error_dep': "department uuid is not exits in list"}
+                response = self.error_response(bundle.request, data_res, response_class=HttpBadRequest)
+                raise ImmediateHttpResponse(response=response)
+        if er2 == 2 or er2 == 3:
+            data_res = {'error_sip': "sip uuid is not valid"}
+            response = self.error_response(bundle.request, data_res, response_class=HttpBadRequest)
+            raise ImmediateHttpResponse(response=response)
+        if er2 == 4:
+            data_res = {'error_sip': "sip uuid is not exist in list"}
+            response = self.error_response(bundle.request, data_res, response_class=HttpBadRequest)
+            raise ImmediateHttpResponse(response=response)
+        if er2 == 5:
+            data_res = {'error_sip': "sip uuid is bell. Let's set another sip account"}
+            response = self.error_response(bundle.request, data_res, response_class=HttpBadRequest)
+            raise ImmediateHttpResponse(response=response)
+        if er1 == 0 and er2 == 0:
+            rgd = RingGroupDestination()
+            listextnb = Extension.objects.filter(extension_uuid__in=lextadd)
+            rgu = RingGroup.objects.get(ring_group_uuid=data[vlrg])
+            print rgu
+            for uuinli in lextadd:
+                extext = Extension.objects.get(extension_uuid=uuinli)                
+                print extext
+                kwargs['ring_group_destination_uuid'] = uuid.uuid4()
+                kwargs['domain_uuid'] = '09f10c29-9f49-4209-9050-52bd09d1886a'
+                rgd.ring_group_uuid = rgu
+                rgd.destination_number = extext
+                rgd.domain_uuid = kwargs['domain_uuid']
+                rgd.ring_group_destination_uuid = kwargs['ring_group_destination_uuid']
+                rgd.save()
+            from device.models import sync_dialplan_rg
+            sync_dialplan_rg(data[vlrg])
+          #  return  self.get_object_list(self, request, **kwargs)    
+            data_res = {"ring_group_destination_uuid": kwargs['ring_group_destination_uuid'], "resource_uri": "/api/v1/rgdes/%s/" % data[vlrg]}
+            response = self.error_response(bundle.request, data_res, response_class=HttpOK)
+            raise ImmediateHttpResponse(response=response)
+
+
 
 
 def is_valid_uuid(val):

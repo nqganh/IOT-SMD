@@ -7,11 +7,11 @@
     <!-- /section:settings.box -->
     <div class="row page-header">
         <div class="col-md-6">
-            <h1>Devices </h1>
+            <h1>Department Information </h1>
         </div>
         {% if user.role == 1 %}
         <div class="col-md-6 right-align">
-            <a href="{% url 'device_add' %}">
+            <a href="{% url 'rgd_create' %}">
             <button class="ColVis_Button ColVis_MasterButton btn btn-white btn-info btn-bold">
                         <span><i class="fa fa-plus"></i></span>
                     </button>
@@ -23,7 +23,7 @@
         <div class="pull-right tableTools-container"></div>
     </div>
     <div class="table-header">
-       Devices
+       Destination Detail
     </div>
     <!-- div.table-responsive -->
     <!-- div.dataTables_borderWrap -->
@@ -38,18 +38,15 @@
                         </label>
                     </th>
                     <th>Client</th>
-                    <th>Sip UUID</th>
-                    <th>Sip Extension</th>
-                    <th>Sip Password</th>
-                    <th>DND</th>
-                    <th>IS BELL</th>
-                    <th></th>
+                    <th class="center">Dept Name</th>
+                    <th class="center">Dept Detail - UUID</th>
+                    <th class="center">Sip Account - Number</th>
+                    <th class="center"></th>
                 </tr>
             </thead>
 
             <tbody>
                    {%for row in object_list %}
-                    {% if row.accountcode.email == user.email or user.role == 1 %}
                 <tr>
                     <td class="center">
                         <label class="pos-rel">
@@ -57,25 +54,25 @@
                             <span class="lbl"></span>
                         </label>
                     </td>
-                    <td>{{row.accountcode}}</td>
-                    <td>{{row.extension_uuid}}</td>
-                    <td>{{row.extension}}</td>
-                    <td>{{row.password}}</td>
-                    <td>{{row.do_not_disturb}}</td>
-                    <td>{{row.description}}</td>
+                    <td>{% for abc in row.ring_group_uuid.user.all %}
+                            {{abc}}
+                        {% endfor %}
+                    </td>
+                    <td class="center">{{row.ring_group_uuid.ring_group_name}} - {{row.ring_group_uuid.ring_group_extension}}</td>
+                    <td class="center">{{row.ring_group_destination_uuid}}</td>
+                    <td class="center">{{row.destination_number}}</td>
                     <td>
                         <div class="hidden-sm hidden-xs action-buttons">
-                            <a class="green" href="{% url 'device_edit' row.extension_uuid %}">
+                            <a class="green" href="{% url 'rgd_edit' row.ring_group_destination_uuid %}">
                                 <i class="ace-icon fa fa-pencil bigger-130"></i>
                             </a>
 
-                            <a class="red" href="{% url 'device_delete' row.extension_uuid %}">
+                            <a class="red" href="{% url 'rgd_delete' row.ring_group_destination_uuid %}">
                                 <i class="ace-icon fa fa-trash-o bigger-130"></i>
                             </a>
                         </div>
                     </td>
                 </tr>
-                {% endif %}
                {% endfor %}
             </tbody>
         </table>
@@ -98,7 +95,7 @@
             bAutoWidth: false,
             "aoColumns": [
               { "bSortable": false },
-              null, null,null, null, null, null, 
+              null, null, null, null, 
               { "bSortable": false }
             ],
             "aaSorting": [],

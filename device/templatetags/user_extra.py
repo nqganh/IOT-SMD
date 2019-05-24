@@ -9,6 +9,6 @@ register = template.Library()
 @register.filter
 def get_client(ext):
     try:
-        return User.objects.get(id=ext.accountcode)
+        return User.objects.get(id=ext.accountcode.id)
     except:
         return ''

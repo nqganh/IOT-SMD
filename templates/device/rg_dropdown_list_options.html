@@ -1,0 +1,4 @@
+<option value="">---------</option>
+{% for rg in ring_group_uuid %}
+<option value="{{ rg.ring_group_uuid }}">{{ rg.ring_group_name }} - {{ rg.ring_group_extension }}</option>
+{% endfor %}

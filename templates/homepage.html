@@ -9,6 +9,7 @@
         <div class="col-md-6">
             <h1>Customers </h1>
         </div>
+        {% if user.role == 1 %}
         <div class="col-md-6 right-align">
             <a href="{% url 'account_add' %}">
             <button class="ColVis_Button ColVis_MasterButton btn btn-white btn-info btn-bold">
@@ -16,6 +17,7 @@
                     </button>
             </a>
         </div>
+        {% endif %}
     </div><!-- /.page-header -->
     <div class="clearfix" style="display: none;">
         <div class="pull-right tableTools-container"></div>
@@ -43,8 +45,7 @@
             </thead>
 
             <tbody>
-                {{ object_list }}
-               {%for row in object_list %}
+                {%for row in object_list %}
                 <tr>
                     <td class="center">
                         <label class="pos-rel">
@@ -60,10 +61,11 @@
                             <a class="green" href="{% url 'account_edit' row.id%}">
                                 <i class="ace-icon fa fa-pencil bigger-130"></i>
                             </a>
-
+                            {% if user.role == 1 %}
                             <a class="red" href="{% url 'account_delete' row.id %}">
                                 <i class="ace-icon fa fa-trash-o bigger-130"></i>
                             </a>
+                            {% endif %}
                         </div>
 
                         <div class="hidden-md hidden-lg">
@@ -76,7 +78,7 @@
                                             </span>
                                         </a>
                                     </li>
-
+                                    {% if user.role == 1 %}
                                     <li>
                                         <a href="{% url 'account_delete' row.id %}" class="tooltip-error" data-rel="tooltip" title="Delete">
                                             <span class="red">
@@ -84,6 +86,7 @@
                                             </span>
                                         </a>
                                     </li>
+                                    {% endif %}
                                 </ul>
                             </div>
                         </div>

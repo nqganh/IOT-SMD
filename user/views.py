@@ -15,7 +15,7 @@ from django.conf import settings
 
 from .forms import LoginForm, UserCreationForm, UserChangeForm
 from .models import User, ADMIN, CUSTOMER
-
+from device.models import RingGroupDestination, RingGroup
 
 class LoginRequiredMixin(object):
 
@@ -36,21 +36,27 @@ class LoginRequiredMixin(object):
 
     def get_queryset(self):
         return super(LoginRequiredMixin, self).get_queryset()
-              .filter(**self.get_queryset_filters())
 
 
 class HomePageView(LoginRequiredMixin, ListView):
-    model = User
-    queryset = User.objects.all()
-    template_name = "homepage.html"
+    model = RingGroup
+    template_name = 'device/rg_list.html'
 
-    def get_template_names(self):
-        return [template_name]
+    def get_paginate_by(self, queryset):
+        if self.request.GET.get('paginate_by'):
+            return self.request.GET.get('paginate_by')
+        return self.paginate_by
 
+    def get_queryset(self):
+        pk = self.request.user.ring_group.all()
+        if self.request.user.role == 1:
+            return super(HomePageView, self).get_queryset().order_by('ring_group_name')
+        else:
+            if self.request.user.role == 2:
+                return super(HomePageView, self).get_queryset().filter(ring_group_uuid__in=pk).order_by('ring_group_name')
 
     def get_context_data(self, **kwargs):
-        context = super(HomePageView, self).get_context_data(*args,**kwargs)
-        print(context)
+        context = super(HomePageView, self).get_context_data(**kwargs)
         return context
 
 class LoginView(FormView):
@@ -108,7 +114,13 @@ class AccountList(LoginRequiredMixin, ListView):
         return ['user/account_list.html']
 
     def get_queryset(self):
-        return super(AccountList, self).get_queryset().exclude(pk=self.request.user.id).filter(role=CUSTOMER).order_by('email')
+       # print User.objects.filter(pk=self.request.user.id)
+        if self.request.user.role == 1:
+            return super(AccountList, self).get_queryset().order_by('email')
+        if self.request.user.role ==2:
+            return super(AccountList, self).get_queryset().filter(pk=self.request.user.id).order_by('email')
+#        return super(AccountList, self).get_queryset().exclude(pk=self.request.user.id).filter(role=CUSTOMER).order_by('email')
+
 
     def get_context_data(self, **kwargs):
         context = super(AccountList, self).get_context_data(**kwargs)

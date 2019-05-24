@@ -9,6 +9,7 @@
         <div class="col-md-6">
             <h1>Customers </h1>
         </div>
+        {% if request.user.role == 1%}
         <div class="col-md-6 right-align">
             <a href="{% url 'account_add' %}">
             <button class="ColVis_Button ColVis_MasterButton btn btn-white btn-info btn-bold">
@@ -16,6 +17,7 @@
                     </button>
             </a>
         </div>
+        {% endif %}
     </div><!-- /.page-header -->
     <div class="clearfix" style="display: none;">
         <div class="pull-right tableTools-container"></div>
@@ -38,6 +40,7 @@
                     <th>Email</th>
                     <th>Sure Name</th>
                     <th>Company</th>
+                    <th class="center">Department Quantity</th>
                     <th></th>
                 </tr>
             </thead>
@@ -54,6 +57,7 @@
                     <td>{{row.email}}</td>
                     <td>{{row.sure_name}}</td>
                     <td>{{row.company}}</td>
+                    <td class="center">{{row.ring_group.all.count}}</td>
                     <td>
                         <div class="hidden-sm hidden-xs action-buttons">
                             <a class="green" href="{% url 'account_edit' row.id%}">
@@ -110,7 +114,7 @@
             bAutoWidth: false,
             "aoColumns": [
               { "bSortable": false },
-              null, null, null, 
+              null, null, null, null,
               { "bSortable": false }
             ],
             "aaSorting": [],

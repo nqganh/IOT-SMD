@@ -8,15 +8,16 @@ from django.conf import settings
 from django.db import models
 
 # Create your models here.
-from user.models import User
+from user.models import User, RingGroup
 
 class Extension(models.Model):
     extension_uuid                 = models.CharField(max_length=256, primary_key=True)
     domain_uuid                    = models.CharField(max_length=256, blank=True, default=settings.DOMAIN_UUID)     
-    extension                      = models.CharField(max_length=10, blank=True)      
+    extension                      = models.CharField(max_length=10, blank=True, unique=True)      
     number_alias                   = models.CharField(max_length=10, blank=True)      
     password                       = models.CharField(max_length=32, blank=True)      
-    accountcode                    = models.CharField(max_length=32, blank=True)      
+    #accountcode                    = models.CharField(max_length=32, blank=True)      
+    accountcode                    = models.ForeignKey(User, blank=True, null=True, db_constraint=False, db_column='accountcode')
     effective_caller_id_name       = models.CharField(max_length=128, blank=True)     
     effective_caller_id_number     = models.CharField(max_length=16, blank=True)      
     outbound_caller_id_name        = models.CharField(max_length=16, blank=True)      
@@ -65,8 +66,8 @@ class Extension(models.Model):
     absolute_codec_string          = models.CharField(max_length=128, blank=True)    
     force_ping                     = models.CharField(max_length=8, blank=True)     
 
-    def __str__(self):
-        return self.extension
+    def __unicode__(self):
+        return "%s" % self.extension
     class Meta:
        managed = False
        db_table = 'v_extensions'
@@ -95,6 +96,30 @@ DIALPLAN_XML = """<extension name="ring group" continue="" uuid="%s">
         </condition>                                                                                   
 </extension>
 """
+def sync_dialplan_rg(ri_gr_uuid):
+    rg = RingGroup.objects.filter(ring_group_uuid=ri_gr_uuid)[0]
+    if rg.ring_group_uuid:
+        dialplan_uuid = rg.dialplan_uuid 
+        syslog.syslog('process to create ring group in FusionPBX')
+        if DialPlan.objects.filter(dialplan_uuid = dialplan_uuid).count() == 0:
+            new_dialplan = DialPlan()
+            new_dialplan.dialplan_uuid = dialplan_uuid
+            new_dialplan.app_uuid = '1d61fb65-1eec-bc73-a6ee-a6203b4fe6f2'
+            new_dialplan.dialplan_name = rg.ring_group_name
+            new_dialplan.dialplan_number = rg.ring_group_extension
+            new_dialplan.dialplan_xml = DIALPLAN_XML % (dialplan_uuid, rg.ring_group_extension, ri_gr_uuid)
+            new_dialplan.save()
+        tmp_dir = '/tmp/'
+        file_name = tmp_dir + 'dialplan.%s' % (settings.CONTEXT)
+        try:
+            os.remove(file_name)
+        except:
+            pass
+def sync_extension_user(exts):
+    ext = Extension.objects.filter(extension=exts)[0]
+    if ext.extension:
+        tmp_dir = '/tmp/'
+        file_name = tmp_dir + 'directory.%s@%s' % (ext.extension, settings.CONTEXT)
 def sync_ring_group_user(user_id):
     if User.objects.filter(id=user_id).count() == 1:
         user = User.objects.filter(id=user_id)[0]
@@ -132,7 +157,7 @@ def sync_ring_group_user(user_id):
                 new_dialplan.dialplan_xml = DIALPLAN_XML % (dialplan_uuid, user.ring_group_ext, ring_group_uuid)
                 new_dialplan.save()
             # create destination for ringgroup
-            for ext in Extension.objects.filter(accountcode=user.id):
+            for ext in Extension.objects.filter(accountcode__id=user.id):
                 if ext.description == 'is_bell':
                     RingGroupDestination.objects.filter(destination_number=ext.extension, ring_group_uuid=ring_group_uuid).delete()
                 elif RingGroupDestination.objects.filter(destination_number=ext.extension,ring_group_uuid=ring_group_uuid).count() == 0:
@@ -155,45 +180,21 @@ def sync_ring_group_user(user_id):
         syslog.syslog('user not found')
 
 
-class RingGroup(models.Model):
-    domain_uuid = models.UUIDField(blank=True, default=settings.DOMAIN_UUID)
-    ring_group_uuid = models.UUIDField(blank=True,  primary_key=True)
-    ring_group_name = models.CharField(max_length=128, blank=True)
-    ring_group_extension = models.CharField(max_length=128, blank=True)
-    ring_group_greeting = models.CharField(max_length=128, blank=True)
-    ring_group_context = models.CharField(max_length=128, blank=True, default=settings.CONTEXT)
-    ring_group_call_timeout = models.IntegerField(blank=True)
-    ring_group_forward_destination = models.CharField(max_length=128, blank=True)
-    ring_group_forward_enabled = models.CharField(max_length=128, blank=True, default='false')
-    ring_group_caller_id_name = models.CharField(max_length=128, blank=True)
-    ring_group_caller_id_number = models.CharField(max_length=128, blank=True)
-    ring_group_cid_name_prefix = models.CharField(max_length=128, blank=True)
-    ring_group_cid_number_prefix = models.CharField(max_length=128, blank=True)
-    ring_group_strategy = models.CharField(max_length=128, blank=True, default='simultaneous')
-    ring_group_timeout_app = models.CharField(max_length=128, blank=True)
-    ring_group_timeout_data = models.CharField(max_length=128, blank=True)
-    ring_group_distinctive_ring = models.CharField(max_length=128, blank=True)
-    ring_group_ringback = models.CharField(max_length=128, blank=True, default='${us-ring}')
-    ring_group_missed_call_app = models.CharField(max_length=128, blank=True)
-    ring_group_missed_call_data = models.CharField(max_length=128, blank=True)
-    ring_group_enabled = models.CharField(max_length=128, blank=True, default='true')
-    ring_group_description = models.CharField(max_length=128, blank=True)
-    dialplan_uuid = models.UUIDField(blank=True)
-    ring_group_forward_toll_allow = models.CharField(max_length=128, blank=True)
-    
-    class Meta:
-       managed = False
-       db_table = 'v_ring_groups'
-
-
 class RingGroupDestination(models.Model):
     ring_group_destination_uuid = models.UUIDField(blank=True,  primary_key=True)
     domain_uuid = models.UUIDField(blank=True, default=settings.DOMAIN_UUID)
-    ring_group_uuid = models.UUIDField(blank=True)
-    destination_number = models.CharField(max_length=128, blank=True)
+   # ring_group_uuid = models.UUIDField(blank=True)
+    ring_group_uuid = models.ForeignKey(RingGroup, blank=True, db_column='ring_group_uuid', to_field='ring_group_uuid')
+   # destination_number = models.CharField(max_length=128, blank=True)
+    destination_number = models.ForeignKey(Extension, blank=True, db_column='destination_number', to_field='extension')
     destination_delay = models.IntegerField(blank=True, default=0) 
     destination_timeout = models.IntegerField(blank=True, default=30) 
     destination_prompt = models.IntegerField(blank=True, default=None) 
+   # def __str__(self):
+   #     return str(self.destination_number)
+    def __unicode__(self):
+       return "%s" % self.destination_number
+
     class Meta:
        managed = False
        db_table = 'v_ring_group_destinations'
@@ -211,6 +212,7 @@ class DialPlan(models.Model):
     dialplan_order = models.IntegerField(blank=True, default=101)
     dialplan_enabled = models.CharField(max_length=128, blank=True, default='true')
     dialplan_description = models.CharField(max_length=128, blank=True)
+
 
     class Meta:
        managed = False
